@@ -1,0 +1,18 @@
+[
+  {
+    "id": 9,
+    "title": "Spider-Man: Across the Spider-Verse",
+    "genre": "Animation",
+    "category": "Фильмы",
+    "description": {
+      "ru": "Майлз Моралес отправляется в приключение по мультивселенной.",
+      "en": "",
+      "kz": ""
+    },
+    "image": "https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcQQLoF0Ek8X5hCZlcnfLa_2DbOO3LE0CWx2X-UcxXjVcS5M5RFb4UFNnEFJKEFvte-ABDGxFWY51mQnsMcc-PE4rtmxml6cA4Miif2RwtY&s=10",
+    "trailer_url": "https://www.youtube.com/embed/cqGjhVJWtEg",
+    "preview_url": "",
+    "artist": "",
+    "is_featured": true
+  }
+]
