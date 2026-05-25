@@ -428,13 +428,13 @@ def fetch_external_data():
     except Exception as e:
         print("Ошибка загрузки фильмов:", e)
 
-    # 2.6 Загрузка Сериалов (iTunes Top TV Seasons)
+    # 2.6 Загрузка Сериалов (iTunes Top TV Episodes)
     try:
-        req = urllib.request.Request("https://itunes.apple.com/us/rss/toptvseasons/limit=100/json", headers={'User-Agent': 'Mozilla/5.0'})
+        req = urllib.request.Request("https://itunes.apple.com/us/rss/toptvepisodes/limit=100/json", headers={'User-Agent': 'Mozilla/5.0'})
         with urllib.request.urlopen(req) as response:
             data = json.loads(response.read().decode())
             for show in data.get('feed', {}).get('entry', []):
-                title = show.get('im:name', {}).get('label', 'Unknown')
+                title = show.get('im:collection', {}).get('im:name', {}).get('label', show.get('im:name', {}).get('label', 'Unknown')).split(', Season')[0]
                 if title.lower().strip() in seen_titles:
                     continue
                 seen_titles.add(title.lower().strip())
@@ -450,6 +450,17 @@ def fetch_external_data():
                 else:
                     img_url = "https://via.placeholder.com/500x750?text=TV+Show"
 
+                trailer_url = ""
+                links = show.get('link', [])
+                if isinstance(links, list):
+                    for link in links:
+                        if link.get('attributes', {}).get('type', '').startswith('video'):
+                            trailer_url = link['attributes']['href']
+                            break
+                elif isinstance(links, dict):
+                    if links.get('attributes', {}).get('type', '').startswith('video'):
+                        trailer_url = links['attributes']['href']
+
                 items.append({
                     "id": current_id,
                     "title": title,
@@ -461,7 +472,7 @@ def fetch_external_data():
                         "kz": summary
                     },
                     "image": img_url,
-                    "trailer_url": ""
+                    "trailer_url": trailer_url
                 })
                 current_id += 1
     except Exception as e:
