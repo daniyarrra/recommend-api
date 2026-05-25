@@ -5,6 +5,7 @@ import urllib.request
 import json
 import random
 import os
+import re
 from dotenv import load_dotenv
 import google.generativeai as genai
 
@@ -394,7 +395,8 @@ def fetch_external_data():
                 images = movie.get('im:image', [])
                 img_url = images[-1].get('label') if images else ""
                 if img_url:
-                    img_url = img_url.replace("170x170bb", "600x600bb").replace("113x170bb", "400x600bb")
+                    img_url = re.sub(r'/\d+x\d+bb', '/600x600bb', img_url)
+                    img_url = img_url.replace('.png', '.jpg').replace('.webp', '.jpg')
                 else:
                     img_url = "https://via.placeholder.com/500x750?text=Movie"
 
@@ -443,7 +445,8 @@ def fetch_external_data():
                 images = show.get('im:image', [])
                 img_url = images[-1].get('label') if images else ""
                 if img_url:
-                    img_url = img_url.replace("170x170bb", "600x600bb").replace("113x170bb", "400x600bb")
+                    img_url = re.sub(r'/\d+x\d+bb', '/600x600bb', img_url)
+                    img_url = img_url.replace('.png', '.jpg').replace('.webp', '.jpg')
                 else:
                     img_url = "https://via.placeholder.com/500x750?text=TV+Show"
 
@@ -481,8 +484,8 @@ def fetch_external_data():
                 images = song.get('im:image', [])
                 img_url = images[-1].get('label') if images else ""
                 if img_url:
-                    img_url = img_url.replace("170x170bb.png", "600x600bb.jpg")
-                    img_url = img_url.replace("170x170bb.webp", "600x600bb.jpg")
+                    img_url = re.sub(r'/\d+x\d+bb', '/600x600bb', img_url)
+                    img_url = img_url.replace('.png', '.jpg').replace('.webp', '.jpg')
                 else:
                     img_url = "https://via.placeholder.com/500x750?text=Music"
 
