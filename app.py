@@ -370,6 +370,14 @@ def fetch_external_data():
         })
     current_id += 7
 
+    # Build seen_titles to avoid duplicates
+    seen_titles = set()
+    for item in items:
+        t = item.get('title', '')
+        if isinstance(t, dict):
+            t = t.get('en', t.get('ru', ''))
+        seen_titles.add(t.lower().strip())
+
     # 2.5 Загрузка Фильмов (iTunes Top Movies)
     try:
         req = urllib.request.Request("https://itunes.apple.com/us/rss/topmovies/limit=100/json", headers={'User-Agent': 'Mozilla/5.0'})
@@ -377,6 +385,9 @@ def fetch_external_data():
             data = json.loads(response.read().decode())
             for movie in data.get('feed', {}).get('entry', []):
                 title = movie.get('im:name', {}).get('label', 'Unknown')
+                if title.lower().strip() in seen_titles:
+                    continue
+                seen_titles.add(title.lower().strip())
                 genre = movie.get('category', {}).get('attributes', {}).get('label', 'Movie')
                 summary = movie.get('summary', {}).get('label', '')
                 
@@ -415,6 +426,44 @@ def fetch_external_data():
     except Exception as e:
         print("Ошибка загрузки фильмов:", e)
 
+    # 2.6 Загрузка Сериалов (iTunes Top TV Seasons)
+    try:
+        req = urllib.request.Request("https://itunes.apple.com/us/rss/toptvseasons/limit=100/json", headers={'User-Agent': 'Mozilla/5.0'})
+        with urllib.request.urlopen(req) as response:
+            data = json.loads(response.read().decode())
+            for show in data.get('feed', {}).get('entry', []):
+                title = show.get('im:name', {}).get('label', 'Unknown')
+                if title.lower().strip() in seen_titles:
+                    continue
+                seen_titles.add(title.lower().strip())
+
+                genre = show.get('category', {}).get('attributes', {}).get('label', 'TV')
+                summary = show.get('summary', {}).get('label', '')
+                
+                images = show.get('im:image', [])
+                img_url = images[-1].get('label') if images else ""
+                if img_url:
+                    img_url = img_url.replace("170x170bb", "600x600bb").replace("113x170bb", "400x600bb")
+                else:
+                    img_url = "https://via.placeholder.com/500x750?text=TV+Show"
+
+                items.append({
+                    "id": current_id,
+                    "title": title,
+                    "genre": genre,
+                    "category": "Сериалы",
+                    "description": {
+                        "ru": summary,
+                        "en": summary,
+                        "kz": summary
+                    },
+                    "image": img_url,
+                    "trailer_url": ""
+                })
+                current_id += 1
+    except Exception as e:
+        print("Ошибка загрузки сериалов:", e)
+
     # 3. Загрузка Музыки (iTunes Top Songs)
     try:
         req = urllib.request.Request("https://itunes.apple.com/us/rss/topsongs/limit=100/json", headers={'User-Agent': 'Mozilla/5.0'})
@@ -422,6 +471,9 @@ def fetch_external_data():
             data = json.loads(response.read().decode())
             for song in data.get('feed', {}).get('entry', []):
                 title = song.get('title', {}).get('label', 'Unknown').split(' - ')[0]
+                if title.lower().strip() in seen_titles:
+                    continue
+                seen_titles.add(title.lower().strip())
                 genre = song.get('category', {}).get('attributes', {}).get('label', 'Music')
                 artist = song.get('im:artist', {}).get('label', 'Unknown Artist')
                 
