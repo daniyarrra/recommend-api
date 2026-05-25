@@ -50,7 +50,9 @@ hardcoded_items = [
             "kz": "Құрғақшылық, шаң дауылдары және өсімдіктердің жойылуы адамзатты дағдарысқа алып келгенде, зерттеушілер тобы жаңадан табылған құрт тесігі арқылы жаңа мекен іздейді."
         },
         "image": "https://upload.wikimedia.org/wikipedia/ru/c/c3/Interstellar_2014.jpg",
-        "trailer_url": "https://www.youtube.com/embed/zSWdZVtXT7E"
+        "trailer_url": "https://www.youtube.com/embed/zSWdZVtXT7E",
+        "cast": [{"name": "Мэттью Макконахи", "photo": "https://upload.wikimedia.org/wikipedia/commons/8/8e/Matthew_McConaughey_-_Goldene_Kamera_2014_-_Berlin.jpg"}, {"name": "Энн Хэтэуэй", "photo": "https://upload.wikimedia.org/wikipedia/commons/e/e1/Anne_Hathaway_Face.jpg"}],
+        "director": [{"name": "Кристофер Нолан", "photo": "https://upload.wikimedia.org/wikipedia/commons/9/95/Christopher_Nolan_Cannes_2018.jpg"}]
     },
     {
         "id": 4, 
@@ -63,7 +65,9 @@ hardcoded_items = [
             "kz": "Пол Атрейдес Чани мен фременмен бірігіп, соғыс жолына шығады."
         },
         "image": "https://upload.wikimedia.org/wikipedia/en/8/8e/Dune_%282021_film%29.jpg",
-        "trailer_url": "https://www.youtube.com/embed/Way9Dexny3w"
+        "trailer_url": "https://www.youtube.com/embed/Way9Dexny3w",
+        "cast": [{"name": "Тимоти Шаламе", "photo": "https://upload.wikimedia.org/wikipedia/commons/4/43/Timoth%C3%A9e_Chalamet_2017_Berlin_Film_Festival.jpg"}, {"name": "Зендея", "photo": "https://upload.wikimedia.org/wikipedia/commons/2/28/Zendaya_-_2019_by_Glenn_Francis.jpg"}],
+        "director": [{"name": "Дени Вильнёв", "photo": "https://upload.wikimedia.org/wikipedia/commons/e/e8/Denis_Villeneuve_Cannes_2018.jpg"}]
     },
     {
         "id": 5, 
@@ -270,9 +274,11 @@ cached_items = []
 def fetch_external_data():
     global cached_items
     if cached_items:
-        # Always refresh custom items even if cache exists
         custom = load_custom_items()
-        base = [i for i in cached_items if i.get('_source') != 'custom']
+        custom_dict = {ci['id']: ci for ci in custom}
+        base = [i for i in cached_items if i.get('_source') != 'custom' and i['id'] not in custom_dict]
+        for ci in custom:
+            ci['_source'] = 'custom'
         return base + custom
         
     items = []
@@ -364,9 +370,54 @@ def fetch_external_data():
         })
     current_id += 7
 
+    # 2.5 Загрузка Фильмов (iTunes Top Movies)
+    try:
+        req = urllib.request.Request("https://itunes.apple.com/us/rss/topmovies/limit=100/json", headers={'User-Agent': 'Mozilla/5.0'})
+        with urllib.request.urlopen(req) as response:
+            data = json.loads(response.read().decode())
+            for movie in data.get('feed', {}).get('entry', []):
+                title = movie.get('im:name', {}).get('label', 'Unknown')
+                genre = movie.get('category', {}).get('attributes', {}).get('label', 'Movie')
+                summary = movie.get('summary', {}).get('label', '')
+                
+                images = movie.get('im:image', [])
+                img_url = images[-1].get('label') if images else ""
+                if img_url:
+                    img_url = img_url.replace("170x170bb", "600x600bb").replace("113x170bb", "400x600bb")
+                else:
+                    img_url = "https://via.placeholder.com/500x750?text=Movie"
+
+                trailer_url = ""
+                links = movie.get('link', [])
+                if isinstance(links, list):
+                    for link in links:
+                        if link.get('attributes', {}).get('type', '').startswith('video'):
+                            trailer_url = link['attributes']['href']
+                            break
+                elif isinstance(links, dict):
+                    if links.get('attributes', {}).get('type', '').startswith('video'):
+                        trailer_url = links['attributes']['href']
+
+                items.append({
+                    "id": current_id,
+                    "title": title,
+                    "genre": genre,
+                    "category": "Фильмы",
+                    "description": {
+                        "ru": summary,
+                        "en": summary,
+                        "kz": summary
+                    },
+                    "image": img_url,
+                    "trailer_url": trailer_url
+                })
+                current_id += 1
+    except Exception as e:
+        print("Ошибка загрузки фильмов:", e)
+
     # 3. Загрузка Музыки (iTunes Top Songs)
     try:
-        req = urllib.request.Request("https://itunes.apple.com/us/rss/topsongs/limit=30/json", headers={'User-Agent': 'Mozilla/5.0'})
+        req = urllib.request.Request("https://itunes.apple.com/us/rss/topsongs/limit=100/json", headers={'User-Agent': 'Mozilla/5.0'})
         with urllib.request.urlopen(req) as response:
             data = json.loads(response.read().decode())
             for song in data.get('feed', {}).get('entry', []):
@@ -439,14 +490,23 @@ def fetch_external_data():
     for item in items:
         item['_source'] = 'builtin'
 
-    # Add custom (admin-added) items
+    # Add custom (admin-added/edited) items
     custom = load_custom_items()
+    custom_dict = {}
     for ci in custom:
         ci['_source'] = 'custom'
-    items.extend(custom)
+        custom_dict[ci['id']] = ci
+        
+    final_items = []
+    for item in items:
+        if item['id'] in custom_dict:
+            continue
+        final_items.append(item)
+        
+    final_items.extend(custom)
 
-    cached_items = items
-    return items
+    cached_items = final_items
+    return final_items
 
 
 def localize_item(item, lang):
@@ -477,7 +537,16 @@ def localize_item(item, lang):
 @app.route("/items")
 def get_items():
     lang = request.args.get("lang", "ru")
+    ids = request.args.get("ids")
     items = fetch_external_data()
+    
+    if ids:
+        try:
+            id_list = [int(i) for i in ids.split(",") if i.strip()]
+            items = [item for item in items if item["id"] in id_list]
+        except ValueError:
+            pass # Ignore invalid id format
+            
     return jsonify([localize_item(item, lang) for item in items])
 
 @app.route("/items/<int:item_id>")
@@ -596,6 +665,8 @@ def admin_create_item():
         "trailer_url": data.get('trailer_url', ''),
         "preview_url": data.get('preview_url', ''),
         "artist": data.get('artist', ''),
+        "cast": data.get('cast', ''),
+        "director": data.get('director', ''),
         "is_featured": data.get('is_featured', False)
     }
 
@@ -634,6 +705,8 @@ def admin_update_item(item_id):
         item['trailer_url'] = data.get('trailer_url', item.get('trailer_url', ''))
         item['preview_url'] = data.get('preview_url', item.get('preview_url', ''))
         item['artist'] = data.get('artist', item.get('artist', ''))
+        item['cast'] = data.get('cast', item.get('cast', ''))
+        item['director'] = data.get('director', item.get('director', ''))
         if 'is_featured' in data:
             item['is_featured'] = data['is_featured']
         save_custom_items(items)
@@ -653,6 +726,8 @@ def admin_update_item(item_id):
             "trailer_url": data.get('trailer_url', ''),
             "preview_url": data.get('preview_url', ''),
             "artist": data.get('artist', ''),
+            "cast": data.get('cast', ''),
+            "director": data.get('director', ''),
             "is_featured": data.get('is_featured', False)
         }
         items.append(new_item)

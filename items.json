@@ -14,5 +14,37 @@
     "preview_url": "",
     "artist": "",
     "is_featured": true
+  },
+  {
+    "id": 4,
+    "title": "Dune: Part Two",
+    "genre": "Sci-Fi",
+    "category": "Фильмы",
+    "description": {
+      "ru": "Пол Атрейдес объединяется с Чани и фременами, отправляясь на тропу войны.",
+      "en": "",
+      "kz": ""
+    },
+    "image": "https://upload.wikimedia.org/wikipedia/en/8/8e/Dune_%282021_film%29.jpg",
+    "trailer_url": "https://www.youtube.com/embed/Way9Dexny3w",
+    "preview_url": "",
+    "artist": "",
+    "cast": [
+      {
+        "name": "Тимоти Шаламе",
+        "photo": "https://resizer.mail.ru/p/8cf22bd0-e4ef-5103-9fcf-3a59e6906125/AQACrDzHI94VA_Ud8SbviEVVP4-uVc-gV8ks6HzK94d8oA_px03HzjvTyMitQuidUUqAFARm-rhyefFNETE_IklCsyw.jpg"
+      },
+      {
+        "name": "Зендея",
+        "photo": "https://upload.wikimedia.org/wikipedia/commons/2/28/Zendaya_-_2019_by_Glenn_Francis.jpg"
+      }
+    ],
+    "director": [
+      {
+        "name": "Дени Вильнёв",
+        "photo": "https://encrypted-tbn3.gstatic.com/licensed-image?q=tbn:ANd9GcQV0sXUdDo5kkBrCO6eSinNWhZH8ppUoyZOqoQ-06-TB_MLbPNuOs_oql1sAdqW9a49hDL70mV5s-SloNU"
+      }
+    ],
+    "is_featured": false
   }
 ]
