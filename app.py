@@ -8,10 +8,15 @@ import os
 import re
 from dotenv import load_dotenv
 import google.generativeai as genai
+from supabase import create_client, Client
 
 load_dotenv()
 if os.getenv("GEMINI_API_KEY"):
     genai.configure(api_key=os.getenv("GEMINI_API_KEY"))
+
+SUPABASE_URL = os.getenv("SUPABASE_URL")
+SUPABASE_KEY = os.getenv("SUPABASE_KEY")
+supabase: Client = create_client(SUPABASE_URL, SUPABASE_KEY) if SUPABASE_URL and SUPABASE_KEY else None
 
 
 app = Flask(__name__)
@@ -42,7 +47,7 @@ CATEGORY_TRANSLATIONS = {
 hardcoded_items = [
     {
         "id": 1, 
-        "title": "Interstellar", 
+        "title": {"ru": "Интерстеллар", "en": "Interstellar", "kz": "Интерстеллар"}, 
         "genre": "Sci-Fi", 
         "category": "Фильмы",
         "description": {
@@ -57,7 +62,7 @@ hardcoded_items = [
     },
     {
         "id": 4, 
-        "title": "Dune: Part Two", 
+        "title": {"ru": "Дюна: Часть вторая", "en": "Dune: Part Two", "kz": "Дюна: Екінші бөлім"}, 
         "genre": "Sci-Fi", 
         "category": "Фильмы",
         "description": {
@@ -72,7 +77,7 @@ hardcoded_items = [
     },
     {
         "id": 5, 
-        "title": "The Dark Knight", 
+        "title": {"ru": "Тёмный рыцарь", "en": "The Dark Knight", "kz": "Қара сері"}, 
         "genre": "Action", 
         "category": "Фильмы",
         "description": {
@@ -85,7 +90,7 @@ hardcoded_items = [
     },
     {
         "id": 7, 
-        "title": "Inception", 
+        "title": {"ru": "Начало", "en": "Inception", "kz": "Бастама"}, 
         "genre": "Sci-Fi", 
         "category": "Фильмы",
         "description": {
@@ -98,7 +103,7 @@ hardcoded_items = [
     },
     {
         "id": 9, 
-        "title": "Spider-Man: Across the Spider-Verse", 
+        "title": {"ru": "Человек-паук: Паутина вселенных", "en": "Spider-Man: Across the Spider-Verse", "kz": "Өрмекші-адам: Әлемдер торы"}, 
         "genre": "Animation", 
         "category": "Фильмы",
         "description": {
@@ -111,7 +116,7 @@ hardcoded_items = [
     },
     {
         "id": 20, 
-        "title": "The Matrix", 
+        "title": {"ru": "Матрица", "en": "The Matrix", "kz": "Матрица"}, 
         "genre": "Sci-Fi", 
         "category": "Фильмы",
         "description": {
@@ -124,7 +129,7 @@ hardcoded_items = [
     },
     {
         "id": 21, 
-        "title": "Avengers: Endgame", 
+        "title": {"ru": "Мстители: Финал", "en": "Avengers: Endgame", "kz": "Кек алушылар: Финал"}, 
         "genre": "Action", 
         "category": "Фильмы",
         "description": {
@@ -137,7 +142,7 @@ hardcoded_items = [
     },
     {
         "id": 22, 
-        "title": "Avatar", 
+        "title": {"ru": "Аватар", "en": "Avatar", "kz": "Аватар"}, 
         "genre": "Sci-Fi", 
         "category": "Фильмы",
         "description": {
@@ -150,7 +155,7 @@ hardcoded_items = [
     },
     {
         "id": 23, 
-        "title": "Oppenheimer", 
+        "title": {"ru": "Оппенгеймер", "en": "Oppenheimer", "kz": "Оппенгеймер"}, 
         "genre": "Drama", 
         "category": "Фильмы",
         "description": {
@@ -163,7 +168,7 @@ hardcoded_items = [
     },
     {
         "id": 24, 
-        "title": "Gladiator", 
+        "title": {"ru": "Гладиатор", "en": "Gladiator", "kz": "Гладиатор"}, 
         "genre": "Action", 
         "category": "Фильмы",
         "description": {
@@ -248,39 +253,68 @@ MUSIC_DESC_ALT = {
     "kz": "{genre} жанрындағы тамаша трек. Орындаушы: {artist}.",
 }
 
-ITEMS_FILE = os.path.join(os.path.dirname(__file__), 'items.json')
+def load_deleted_ids():
+    """Load IDs of items deleted by admin from Supabase."""
+    if not supabase: return set()
+    try:
+        res = supabase.table("deleted_items").select("item_id").execute()
+        return set(item['item_id'] for item in res.data)
+    except Exception as e:
+        print("Error loading deleted items:", e)
+        return set()
 
 def load_custom_items():
-    """Load admin-added items from JSON file."""
+    """Load admin-added items from Supabase."""
+    if not supabase: return []
     try:
-        with open(ITEMS_FILE, 'r', encoding='utf-8') as f:
-            return json.load(f)
-    except (FileNotFoundError, json.JSONDecodeError):
+        res = supabase.table("items").select("*").execute()
+        return res.data
+    except Exception as e:
+        print("Error loading custom items:", e)
         return []
-
-def save_custom_items(items):
-    """Save admin-added items to JSON file."""
-    with open(ITEMS_FILE, 'w', encoding='utf-8') as f:
-        json.dump(items, f, ensure_ascii=False, indent=2)
 
 def get_next_custom_id():
     """Get the next available ID for custom items (starting from 1000)."""
-    items = load_custom_items()
-    if not items:
+    if not supabase: return 1000
+    try:
+        res = supabase.table("items").select("id").order("id", desc=True).limit(1).execute()
+        if res.data:
+            return max(1000, res.data[0]['id'] + 1)
         return 1000
-    return max(i['id'] for i in items) + 1
+    except Exception as e:
+        print("Error getting next id:", e)
+        return int(random.random() * 10000) + 1000
 
 cached_items = []
 
 def fetch_external_data():
     global cached_items
+    deleted_ids = load_deleted_ids()
+    
     if cached_items:
         custom = load_custom_items()
         custom_dict = {ci['id']: ci for ci in custom}
-        base = [i for i in cached_items if i.get('_source') != 'custom' and i['id'] not in custom_dict]
-        for ci in custom:
+        
+        final_list = []
+        for item in cached_items:
+            # Skip old custom items from the cached list, we'll place fresh ones
+            if item.get('_source') == 'custom':
+                continue
+                
+            if item['id'] in custom_dict:
+                ci = custom_dict.pop(item['id'])
+                ci['_source'] = 'custom'
+                final_list.append(ci)
+            else:
+                final_list.append(item)
+                
+        # Remaining items in custom_dict are newly added
+        new_items = sorted(list(custom_dict.values()), key=lambda x: x.get('id', 0), reverse=True)
+        for ci in new_items:
             ci['_source'] = 'custom'
-        return base + custom
+            
+        final_list = new_items + final_list
+        return [i for i in final_list if i['id'] not in deleted_ids]
         
     items = []
     items.extend(hardcoded_items)
@@ -291,7 +325,7 @@ def fetch_external_data():
     hardcoded_shows = [
         {
             "id": current_id,
-            "title": "Breaking Bad",
+            "title": {"ru": "Во все тяжкие", "en": "Breaking Bad", "kz": "Аса ауыр қылмыс"},
             "genre": "Drama",
             "category": "Сериалы",
             "description": {
@@ -304,7 +338,7 @@ def fetch_external_data():
         },
         {
             "id": current_id + 1,
-            "title": "Game of Thrones",
+            "title": {"ru": "Игра престолов", "en": "Game of Thrones", "kz": "Тақтар таласы"},
             "genre": "Fantasy",
             "category": "Сериалы",
             "description": {
@@ -317,7 +351,7 @@ def fetch_external_data():
         },
         {
             "id": current_id + 2,
-            "title": "Stranger Things",
+            "title": {"ru": "Очень странные дела", "en": "Stranger Things", "kz": "Оғаш нәрселер"},
             "genre": "Sci-Fi",
             "category": "Сериалы",
             "description": {
@@ -330,7 +364,7 @@ def fetch_external_data():
         },
         {
             "id": current_id + 3,
-            "title": "The Office",
+            "title": {"ru": "Офис", "en": "The Office", "kz": "Кеңсе"},
             "genre": "Comedy",
             "category": "Сериалы",
             "description": {
@@ -343,7 +377,7 @@ def fetch_external_data():
         },
         {
             "id": current_id + 4,
-            "title": "Chernobyl",
+            "title": {"ru": "Чернобыль", "en": "Chernobyl", "kz": "Чернобыль"},
             "genre": "Drama",
             "category": "Сериалы",
             "description": {
@@ -566,10 +600,16 @@ def fetch_external_data():
     final_items = []
     for item in items:
         if item['id'] in custom_dict:
-            continue
-        final_items.append(item)
-        
-    final_items.extend(custom)
+            final_items.append(custom_dict.pop(item['id']))
+        else:
+            final_items.append(item)
+            
+    # Remaining custom items are newly added by admin, put them at the front
+    new_items = sorted(list(custom_dict.values()), key=lambda x: x.get('id', 0), reverse=True)
+    final_items = new_items + final_items
+
+    # Filter out deleted items
+    final_items = [i for i in final_items if i['id'] not in deleted_ids]
 
     cached_items = final_items
     return final_items
@@ -584,13 +624,15 @@ def localize_item(item, lang):
     
     # Resolve description
     desc = result.get("description", "")
+    result["raw_description"] = desc
     if isinstance(desc, dict):
-        result["description"] = desc.get(lang, desc.get("ru", ""))
+        result["description"] = desc.get(lang) or desc.get("ru") or ""
     
     # Resolve title (for HP books)
     title = result.get("title", "")
+    result["raw_title"] = title
     if isinstance(title, dict):
-        result["title"] = title.get(lang, title.get("ru", ""))
+        result["title"] = title.get(lang) or title.get("ru") or ""
     
     # Resolve category
     cat = result.get("category", "")
@@ -714,12 +756,16 @@ def register():
 def admin_create_item():
     """Create a new content item."""
     data = request.json
-    if not data or not data.get('title') or not data.get('genre') or not data.get('category'):
+    if not data or not data.get('title_ru') or not data.get('genre') or not data.get('category'):
         return jsonify({"error": "Missing required fields"}), 400
 
     new_item = {
         "id": get_next_custom_id(),
-        "title": data['title'],
+        "title": {
+            "ru": data.get('title_ru', ''),
+            "en": data.get('title_en', ''),
+            "kz": data.get('title_kz', '')
+        },
         "genre": data['genre'],
         "category": data['category'],
         "description": {
@@ -736,9 +782,11 @@ def admin_create_item():
         "is_featured": data.get('is_featured', False)
     }
 
-    items = load_custom_items()
-    items.append(new_item)
-    save_custom_items(items)
+    try:
+        if supabase:
+            supabase.table("items").insert(new_item).execute()
+    except Exception as e:
+        return jsonify({"error": str(e)}), 500
 
     # Clear cache so new items are picked up
     global cached_items
@@ -754,50 +802,65 @@ def admin_update_item(item_id):
     if not data:
         return jsonify({"error": "No data provided"}), 400
 
-    items = load_custom_items()
-    item = next((i for i in items if i['id'] == item_id), None)
+    if not supabase:
+        return jsonify({"error": "Supabase not configured"}), 500
 
-    if item:
-        # Update custom item
-        item['title'] = data.get('title', item['title'])
-        item['genre'] = data.get('genre', item['genre'])
-        item['category'] = data.get('category', item['category'])
-        item['description'] = {
-            "ru": data.get('description_ru', item.get('description', {}).get('ru', '')),
-            "en": data.get('description_en', item.get('description', {}).get('en', '')),
-            "kz": data.get('description_kz', item.get('description', {}).get('kz', ''))
-        }
-        item['image'] = data.get('image', item.get('image', ''))
-        item['trailer_url'] = data.get('trailer_url', item.get('trailer_url', ''))
-        item['preview_url'] = data.get('preview_url', item.get('preview_url', ''))
-        item['artist'] = data.get('artist', item.get('artist', ''))
-        item['cast'] = data.get('cast', item.get('cast', ''))
-        item['director'] = data.get('director', item.get('director', ''))
-        if 'is_featured' in data:
-            item['is_featured'] = data['is_featured']
-        save_custom_items(items)
-    else:
-        # Item is hardcoded — create a custom override
-        new_item = {
-            "id": item_id,
-            "title": data.get('title', ''),
-            "genre": data.get('genre', ''),
-            "category": data.get('category', ''),
-            "description": {
-                "ru": data.get('description_ru', ''),
-                "en": data.get('description_en', ''),
-                "kz": data.get('description_kz', '')
-            },
-            "image": data.get('image', ''),
-            "trailer_url": data.get('trailer_url', ''),
-            "preview_url": data.get('preview_url', ''),
-            "artist": data.get('artist', ''),
-            "cast": data.get('cast', ''),
-            "director": data.get('director', ''),
-            "is_featured": data.get('is_featured', False)
-        }
-        items.append(new_item)
-        save_custom_items(items)
+    try:
+        # Check if item already exists in Supabase
+        res = supabase.table("items").select("*").eq("id", item_id).execute()
+        
+        if res.data:
+            item = res.data[0]
+            item['title'] = {
+                "ru": data.get('title_ru', item.get('title', {}).get('ru', '') if isinstance(item.get('title'), dict) else item.get('title', '')),
+                "en": data.get('title_en', item.get('title', {}).get('en', '') if isinstance(item.get('title'), dict) else ''),
+                "kz": data.get('title_kz', item.get('title', {}).get('kz', '') if isinstance(item.get('title'), dict) else '')
+            }
+            item['genre'] = data.get('genre', item.get('genre'))
+            item['category'] = data.get('category', item.get('category'))
+            item['description'] = {
+                "ru": data.get('description_ru', item.get('description', {}).get('ru', '') if isinstance(item.get('description'), dict) else item.get('description', '')),
+                "en": data.get('description_en', item.get('description', {}).get('en', '') if isinstance(item.get('description'), dict) else ''),
+                "kz": data.get('description_kz', item.get('description', {}).get('kz', '') if isinstance(item.get('description'), dict) else '')
+            }
+            item['image'] = data.get('image', item.get('image', ''))
+            item['trailer_url'] = data.get('trailer_url', item.get('trailer_url', ''))
+            item['preview_url'] = data.get('preview_url', item.get('preview_url', ''))
+            item['artist'] = data.get('artist', item.get('artist', ''))
+            item['cast'] = data.get('cast', item.get('cast', ''))
+            item['director'] = data.get('director', item.get('director', ''))
+            if 'is_featured' in data:
+                item['is_featured'] = data['is_featured']
+            
+            supabase.table("items").update(item).eq("id", item_id).execute()
+        else:
+            # Item is hardcoded/external — create a custom override in Supabase
+            new_item = {
+                "id": item_id,
+                "title": {
+                    "ru": data.get('title_ru', ''),
+                    "en": data.get('title_en', ''),
+                    "kz": data.get('title_kz', '')
+                },
+                "genre": data.get('genre', ''),
+                "category": data.get('category', ''),
+                "description": {
+                    "ru": data.get('description_ru', ''),
+                    "en": data.get('description_en', ''),
+                    "kz": data.get('description_kz', '')
+                },
+                "image": data.get('image', ''),
+                "trailer_url": data.get('trailer_url', ''),
+                "preview_url": data.get('preview_url', ''),
+                "artist": data.get('artist', ''),
+                "cast": data.get('cast', ''),
+                "director": data.get('director', ''),
+                "is_featured": data.get('is_featured', False)
+            }
+            supabase.table("items").insert(new_item).execute()
+    except Exception as e:
+        print("Error updating item:", e)
+        return jsonify({"error": str(e)}), 500
 
     global cached_items
     cached_items = []
@@ -808,14 +871,20 @@ def admin_update_item(item_id):
 @app.route("/admin/items/<int:item_id>", methods=["DELETE"])
 def admin_delete_item(item_id):
     """Delete a content item."""
-    items = load_custom_items()
-    new_items = [i for i in items if i['id'] != item_id]
+    if not supabase:
+        return jsonify({"error": "Supabase not configured"}), 500
 
-    if len(new_items) == len(items):
-        return jsonify({"error": "Item not found or is a built-in item"}), 404
+    try:
+        # Add to deleted_items table so fetch_external_data ignores it
+        supabase.table("deleted_items").upsert({"item_id": item_id}).execute()
+        
+        # Also remove from items table if it's a custom item
+        supabase.table("items").delete().eq("id", item_id).execute()
+    except Exception as e:
+        print("Error deleting item:", e)
+        return jsonify({"error": "Failed to delete"}), 500
 
-    save_custom_items(new_items)
-
+    # Clear cache
     global cached_items
     cached_items = []
 
@@ -860,12 +929,21 @@ def admin_ai_fill():
         
     prompt = f"""
     You are an expert content editor for an entertainment catalog.
-    Please write engaging descriptions for the following item:
-    Title: "{title}"
-    Category: "{category}"
+    We have an item in category "{category}" with the input title "{title}".
+    
+    Please detect the language of the title and generate:
+    1. The translated/transliterated titles for:
+       - Russian (title_ru) (e.g., if input is "The Drama", this should be "Драма")
+       - English (title_en) (e.g., if input is "The Drama", this should be "The Drama")
+       - Kazakh (title_kz) (e.g., if input is "The Drama", this should be "Драма")
+    2. Comma-separated genres.
+    3. Catchy descriptions (about 2-3 sentences) in Russian, English, and Kazakh.
     
     Provide the response ONLY in the following JSON format, without any markdown formatting or backticks:
     {{
+        "title_ru": "Title translated/transliterated to Russian",
+        "title_en": "Title translated/transliterated to English",
+        "title_kz": "Title translated/transliterated to Kazakh",
         "genre": "Comma separated genres (e.g., Sci-Fi, Drama)",
         "description_ru": "A catchy description in Russian (about 2-3 sentences).",
         "description_en": "A catchy description in English (about 2-3 sentences).",
