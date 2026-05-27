@@ -413,6 +413,7 @@ def fetch_external_data():
             t = t.get('en', t.get('ru', ''))
         seen_titles.add(t.lower().strip())
 
+    current_id = 10000
     # 2.5 Загрузка Фильмов (iTunes Top Movies)
     try:
         req = urllib.request.Request("https://itunes.apple.com/us/rss/topmovies/limit=100/json", headers={'User-Agent': 'Mozilla/5.0'})
@@ -462,6 +463,7 @@ def fetch_external_data():
     except Exception as e:
         print("Ошибка загрузки фильмов:", e)
 
+    current_id = 11000
     # 2.6 Загрузка Сериалов (iTunes Top TV Episodes)
     try:
         req = urllib.request.Request("https://itunes.apple.com/us/rss/toptvepisodes/limit=100/json", headers={'User-Agent': 'Mozilla/5.0'})
@@ -512,6 +514,7 @@ def fetch_external_data():
     except Exception as e:
         print("Ошибка загрузки сериалов:", e)
 
+    current_id = 12000
     # 3. Загрузка Музыки (iTunes Top Songs)
     try:
         req = urllib.request.Request("https://itunes.apple.com/us/rss/topsongs/limit=100/json", headers={'User-Agent': 'Mozilla/5.0'})
@@ -558,6 +561,7 @@ def fetch_external_data():
     except Exception as e:
         print("Ошибка загрузки музыки:", e)
 
+    current_id = 13000
     # 4. Загрузка Tame Impala
     try:
         req = urllib.request.Request("https://itunes.apple.com/search?term=tame+impala&entity=song&limit=12", headers={'User-Agent': 'Mozilla/5.0'})
