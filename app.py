@@ -713,7 +713,7 @@ Format:
 ]
 """
             try:
-                model = genai.GenerativeModel('gemini-flash-latest')
+                model = genai.GenerativeModel('gemini-3.5-flash')
                 response = model.generate_content(prompt)
                 response_text = response.text.strip()
                 if response_text.startswith("```json"):
@@ -956,7 +956,7 @@ def admin_ai_fill():
     """
     
     try:
-        model = genai.GenerativeModel('gemini-flash-latest')
+        model = genai.GenerativeModel('gemini-3.5-flash')
         response = model.generate_content(prompt)
         response_text = response.text.strip()
         
@@ -1032,7 +1032,7 @@ Format:
         # Try REST API directly first (bypasses geographic library checks)
         try:
             import urllib.request as urlreq
-            rest_url = f"https://generativelanguage.googleapis.com/v1beta/models/gemini-flash-latest:generateContent?key={api_key}"
+            rest_url = f"https://generativelanguage.googleapis.com/v1beta/models/gemini-3.5-flash:generateContent?key={api_key}"
             rest_body = json.dumps({
                 "contents": [{"parts": [{"text": prompt}]}],
                 "generationConfig": {"temperature": 0.7, "maxOutputTokens": 1024}
@@ -1044,7 +1044,7 @@ Format:
         except Exception as rest_err:
             print("REST API failed, trying library:", rest_err)
             # Fallback to library
-            model = genai.GenerativeModel('gemini-flash-latest')
+            model = genai.GenerativeModel('gemini-3.5-flash')
             response = model.generate_content(prompt)
             response_text = response.text.strip()
         
