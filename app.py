@@ -974,30 +974,31 @@ def admin_ai_fill():
 
 @app.route("/api/chat", methods=["POST"])
 def api_chat():
-    lang = request.args.get("lang", "ru")
-    data = request.json
-    message = data.get("message", "")
-    history = data.get("history", [])
-    
-    if not message:
-        return jsonify({"error": "Empty message"}), 400
+    try:
+        lang = request.args.get("lang", "ru")
+        data = request.json
+        message = data.get("message", "")
+        history = data.get("history", [])
         
-    items = fetch_external_data()
-    catalog_summary = []
-    for i in items:
-        title = i.get('title')
-        if isinstance(title, dict):
-            title = title.get("en", title.get("ru", ""))
-        catalog_summary.append(f"{i['id']}: {title} ({i['genre']}, {i['category']})")
+        if not message:
+            return jsonify({"error": "Empty message"}), 400
+            
+        items = fetch_external_data()
+        catalog_summary = []
+        for i in items:
+            title = i.get('title')
+            if isinstance(title, dict):
+                title = title.get("en", title.get("ru", ""))
+            catalog_summary.append(f"{i['id']}: {title} ({i['genre']}, {i['category']})")
+            
+        history_text = ""
+        if history:
+            history_text = "Conversation history:\n"
+            for msg in history[-10:]: # include last 10 messages for context
+                role_name = "User" if msg.get("role") == "user" else "AI"
+                history_text += f"{role_name}: {msg.get('text', '')}\n"
         
-    history_text = ""
-    if history:
-        history_text = "Conversation history:\n"
-        for msg in history[-10:]: # include last 10 messages for context
-            role_name = "User" if msg.get("role") == "user" else "AI"
-            history_text += f"{role_name}: {msg.get('text', '')}\n"
-        
-    prompt = f"""
+        prompt = f"""
 You are a helpful, highly intelligent, and enthusiastic AI assistant for the RecMedia platform.
 You are capable of answering ANY question the user asks, including general knowledge, science, programming, math, casual conversation, and media recommendations.
 
@@ -1018,7 +1019,7 @@ Format:
   "item_ids": []
 }}
 """
-    try:
+
         if not os.getenv("GEMINI_API_KEY"):
             return jsonify({
                 "reply": "К сожалению, AI отключен (нет API ключа). Но я все равно рад вас видеть!", 
@@ -1044,12 +1045,16 @@ Format:
                 recommended_items.append(localize_item(matched_item, lang))
                 
         return jsonify({
-            "reply": ai_response.get("reply", ""),
+            "reply": ai_response.get("reply", "Извините, не удалось сформировать ответ."),
             "items": recommended_items
         })
+        
     except Exception as e:
-        print("Chat API Error:", e)
-        return jsonify({"error": "Failed to process chat message"}), 500
+        print("AI Chat Error:", e)
+        return jsonify({
+            "reply": f"Упс, похоже, AI сейчас недоступен. Ошибка: {str(e)}",
+            "items": []
+        })
 
 if __name__ == "__main__":
     port = int(os.environ.get("PORT", 5000))
