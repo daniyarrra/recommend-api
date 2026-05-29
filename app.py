@@ -713,7 +713,7 @@ Format:
 ]
 """
             try:
-                model = genai.GenerativeModel('gemini-2.0-flash')
+                model = genai.GenerativeModel('gemini-flash-latest')
                 response = model.generate_content(prompt)
                 response_text = response.text.strip()
                 if response_text.startswith("```json"):
@@ -956,7 +956,7 @@ def admin_ai_fill():
     """
     
     try:
-        model = genai.GenerativeModel('gemini-2.0-flash')
+        model = genai.GenerativeModel('gemini-flash-latest')
         response = model.generate_content(prompt)
         response_text = response.text.strip()
         
