@@ -676,71 +676,221 @@ def rate():
     print(data)
     return jsonify({"message": "ok"})
 
+def get_item_title(item, lang="ru"):
+    title = item.get("title", "")
+    if isinstance(title, dict):
+        return title.get(lang) or title.get("ru") or title.get("en") or ""
+    return str(title or "")
+
+
+DEFAULT_GEMINI_MODELS = [
+    "gemini-2.5-flash-lite",
+    "gemini-2.5-flash",
+    "gemini-2.0-flash",
+    "gemini-1.5-flash",
+]
+
+
+def get_gemini_models():
+    env_model = os.getenv("GEMINI_MODEL", "").strip()
+    if env_model:
+        return [env_model] + [m for m in DEFAULT_GEMINI_MODELS if m != env_model]
+    return DEFAULT_GEMINI_MODELS
+
+
+def parse_gemini_json(raw):
+    text = (raw or "").strip()
+    if not text:
+        raise ValueError("Empty model response")
+
+    if text.startswith("```json"):
+        text = text[7:-3].strip()
+    elif text.startswith("```"):
+        text = text[3:-3].strip()
+
+    try:
+        return json.loads(text)
+    except json.JSONDecodeError:
+        start = text.find("[") if text.find("[") != -1 else text.find("{")
+        end = text.rfind("]") if text.find("[") != -1 else text.rfind("}")
+        if start != -1 and end > start:
+            return json.loads(text[start:end + 1])
+        raise
+
+
+def call_gemini_recommendations(prompt, api_key):
+    import urllib.request as urlreq
+
+    last_error = None
+    for model in get_gemini_models():
+        try:
+            rest_url = f"https://generativelanguage.googleapis.com/v1beta/models/{model}:generateContent?key={api_key}"
+            rest_body = json.dumps({
+                "contents": [{"parts": [{"text": prompt}]}],
+                "generationConfig": {
+                    "temperature": 0.7,
+                    "maxOutputTokens": 2048,
+                    "responseMimeType": "application/json",
+                    "responseSchema": {
+                        "type": "ARRAY",
+                        "items": {
+                            "type": "OBJECT",
+                            "properties": {
+                                "id": {"type": "INTEGER"},
+                                "ai_reason": {"type": "STRING"},
+                            },
+                            "required": ["id", "ai_reason"],
+                        },
+                    },
+                },
+            }).encode("utf-8")
+            rest_req = urlreq.Request(
+                rest_url,
+                data=rest_body,
+                headers={"Content-Type": "application/json"},
+                method="POST",
+            )
+            with urlreq.urlopen(rest_req, timeout=45) as resp:
+                rest_data = json.loads(resp.read().decode())
+
+            if rest_data.get("error"):
+                error = rest_data["error"]
+                last_error = error.get("message", "Unknown Gemini error")
+                code = error.get("code")
+                status = error.get("status")
+                if code in (429, 404) or status in ("RESOURCE_EXHAUSTED", "NOT_FOUND"):
+                    print(f"Gemini {model} failed ({code}): {last_error}")
+                    continue
+                break
+
+            response_text = rest_data["candidates"][0]["content"]["parts"][0]["text"]
+            return parse_gemini_json(response_text)
+        except Exception as e:
+            last_error = str(e)
+            print(f"Gemini {model} error:", e)
+
+    if last_error:
+        print("All Gemini models failed:", last_error)
+    return None
+
+
+LOCAL_REASON_TEMPLATES = {
+    "ru": {
+        "genre": "Жанр совпадает с контентом, который вы уже высоко оценили — скорее всего, зайдёт.",
+        "watchlist": "Похоже на то, что вы уже сохранили в список — логичное продолжение ваших интересов.",
+        "default": "Подобрано автоматически по вашим оценкам и сохранённому контенту.",
+    },
+    "en": {
+        "genre": "Its genre matches content you already rated highly, so it is likely to fit your taste.",
+        "watchlist": "Similar to items already in your watchlist, so it follows your current interests.",
+        "default": "Picked automatically based on your ratings and saved items.",
+    },
+    "kz": {
+        "genre": "Жанры сіз жоғары баға берген контентке ұқсайды — ұнайды деп ойлаймыз.",
+        "watchlist": "Сіз сақтаған контентке ұқсас — қызығушылықтарыңыздың жалғасы.",
+        "default": "Бағаларыңыз бен сақталған контентке сүйене отырып автоматты түрде таңдалды.",
+    },
+}
+
+
+def build_local_recommendations(items, liked_titles, watchlist_titles, lang):
+    templates = LOCAL_REASON_TEMPLATES.get(lang, LOCAL_REASON_TEMPLATES["ru"])
+    reference_titles = set(liked_titles + watchlist_titles)
+    liked_genres = set()
+    excluded_ids = set()
+
+    for item in items:
+        title = get_item_title(item, lang)
+        if title in reference_titles:
+            excluded_ids.add(item["id"])
+            for part in re.split(r"[,/&]|(?:\s+and\s+)", str(item.get("genre", "")), flags=re.I):
+                part = part.strip()
+                if part:
+                    liked_genres.add(part.lower())
+
+    pool = [item for item in items if item["id"] not in excluded_ids]
+
+    def score_item(item):
+        genre_text = str(item.get("genre", "")).lower()
+        score = sum(2 for genre in liked_genres if genre in genre_text)
+        return score + random.random()
+
+    pool.sort(key=score_item, reverse=True)
+    picks = pool[:6]
+    if len(picks) < 6:
+        extras = [item for item in pool[6:] if item not in picks]
+        random.shuffle(extras)
+        picks.extend(extras[:6 - len(picks)])
+
+    results = []
+    for item in picks[:6]:
+        loc_item = localize_item(item, lang)
+        genre_text = str(item.get("genre", "")).lower()
+        if liked_genres and any(genre in genre_text for genre in liked_genres):
+            loc_item["ai_reason"] = templates["genre"]
+        elif watchlist_titles:
+            loc_item["ai_reason"] = templates["watchlist"]
+        else:
+            loc_item["ai_reason"] = templates["default"]
+        results.append(loc_item)
+
+    return results
+
+
 @app.route("/recommend", methods=["GET", "POST"])
 def recommend():
     lang = request.args.get("lang", "ru")
     items = fetch_external_data()
     
-    if request.method == "POST" and request.is_json and os.getenv("GEMINI_API_KEY"):
+    if request.method == "POST" and request.is_json:
         data = request.json
         liked_titles = data.get("liked_titles", [])
         watchlist_titles = data.get("watchlist_titles", [])
         
         if liked_titles or watchlist_titles:
             catalog_summary = []
-            for i in items:
-                title = i.get('title')
-                if isinstance(title, dict):
-                    title = title.get("en", title.get("ru", ""))
-                catalog_summary.append(f"{i['id']}: {title} ({i['genre']})")
+            for i in items[:150]:
+                title = get_item_title(i, lang)
+                catalog_summary.append(f"{i['id']}: {title} ({i.get('genre', '')})")
                 
-            prompt = f"""
-You are a media recommendation engine.
+            prompt = f"""You are a media recommendation engine.
 User likes these items: {', '.join(liked_titles) if liked_titles else 'None specified'}
 User wants to watch/read/listen to: {', '.join(watchlist_titles) if watchlist_titles else 'None specified'}
 
 Here is our catalog (ID: Title):
 {chr(10).join(catalog_summary)}
 
-Select 6 DIFFERENT items from the catalog that the user would enjoy the most. 
-For each selected item, provide its exact integer ID from the catalog, and a short, 1-2 sentence personalized explanation of why they will like it.
+Select 6 DIFFERENT items from the catalog that the user would enjoy the most.
+For each selected item, provide its exact integer ID from the catalog and a short, personalized 1-2 sentence explanation of why they will like it.
 The explanation MUST be written in {lang} language.
+Do not recommend items the user already liked or saved.
 
-Respond ONLY with a valid JSON array of objects, with no markdown formatting or backticks.
+Respond ONLY with a valid JSON array of objects.
 Format:
 [
   {{"id": 123, "ai_reason": "Explanation in requested language..."}}
-]
-"""
-            try:
-                model = genai.GenerativeModel('gemini-3.5-flash')
-                response = model.generate_content(prompt)
-                response_text = response.text.strip()
-                if response_text.startswith("```json"):
-                    response_text = response_text[7:-3].strip()
-                elif response_text.startswith("```"):
-                    response_text = response_text[3:-3].strip()
-                    
-                ai_recs = json.loads(response_text)
-                
-                final_recs = []
-                for rec in ai_recs:
-                    item_id = rec.get("id")
-                    matched_item = next((i for i in items if i["id"] == item_id), None)
-                    if matched_item:
-                        loc_item = localize_item(matched_item, lang)
-                        loc_item["ai_reason"] = rec.get("ai_reason")
-                        final_recs.append(loc_item)
-                        
-                if final_recs:
-                    return jsonify(final_recs)
-                    
-            except Exception as e:
-                print("Gemini API Error:", e)
-                # Fallback to random if AI fails
-                pass
+]"""
 
-    # Fallback to random
+            api_key = os.getenv("GEMINI_API_KEY")
+            if api_key:
+                ai_recs = call_gemini_recommendations(prompt, api_key)
+                if ai_recs:
+                    final_recs = []
+                    for rec in ai_recs:
+                        item_id = rec.get("id")
+                        matched_item = next((i for i in items if i["id"] == item_id), None)
+                        if matched_item:
+                            loc_item = localize_item(matched_item, lang)
+                            loc_item["ai_reason"] = rec.get("ai_reason")
+                            final_recs.append(loc_item)
+
+                    if final_recs:
+                        return jsonify(final_recs)
+
+            print("Falling back to local recommendations with ai_reason")
+            return jsonify(build_local_recommendations(items, liked_titles, watchlist_titles, lang))
+
+    # Fallback to random for guests without taste data
     recommendations = random.sample(items, min(6, len(items)))
     return jsonify([localize_item(item, lang) for item in recommendations])
 
@@ -956,9 +1106,17 @@ def admin_ai_fill():
     """
     
     try:
-        model = genai.GenerativeModel('gemini-3.5-flash')
-        response = model.generate_content(prompt)
-        response_text = response.text.strip()
+        import urllib.request as urlreq
+        api_key = os.getenv("GEMINI_API_KEY")
+        rest_url = f"https://generativelanguage.googleapis.com/v1beta/models/gemini-3.5-flash:generateContent?key={api_key}"
+        rest_body = json.dumps({
+            "contents": [{"parts": [{"text": prompt}]}],
+            "generationConfig": {"temperature": 0.7, "maxOutputTokens": 1024}
+        }).encode("utf-8")
+        rest_req = urlreq.Request(rest_url, data=rest_body, headers={"Content-Type": "application/json"}, method="POST")
+        with urlreq.urlopen(rest_req, timeout=30) as resp:
+            rest_data = json.loads(resp.read().decode())
+            response_text = rest_data["candidates"][0]["content"]["parts"][0]["text"].strip()
         
         # Clean up possible markdown
         if response_text.startswith("```json"):
@@ -1041,12 +1199,13 @@ Format:
             with urlreq.urlopen(rest_req, timeout=30) as resp:
                 rest_data = json.loads(resp.read().decode())
                 response_text = rest_data["candidates"][0]["content"]["parts"][0]["text"].strip()
+        except urllib.error.HTTPError as http_err:
+            error_body = http_err.read().decode('utf-8', errors='ignore')
+            print(f"REST API HTTP Error {http_err.code}:", error_body)
+            raise Exception(f"HTTP {http_err.code}: {error_body}")
         except Exception as rest_err:
-            print("REST API failed, trying library:", rest_err)
-            # Fallback to library
-            model = genai.GenerativeModel('gemini-3.5-flash')
-            response = model.generate_content(prompt)
-            response_text = response.text.strip()
+            print("REST API failed:", rest_err)
+            raise Exception(str(rest_err))
         
         if response_text.startswith("```json"):
             response_text = response_text[7:-3].strip()
