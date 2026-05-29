@@ -977,6 +977,7 @@ def api_chat():
     lang = request.args.get("lang", "ru")
     data = request.json
     message = data.get("message", "")
+    history = data.get("history", [])
     
     if not message:
         return jsonify({"error": "Empty message"}), 400
@@ -989,22 +990,32 @@ def api_chat():
             title = title.get("en", title.get("ru", ""))
         catalog_summary.append(f"{i['id']}: {title} ({i['genre']}, {i['category']})")
         
+    history_text = ""
+    if history:
+        history_text = "Conversation history:\n"
+        for msg in history[-10:]: # include last 10 messages for context
+            role_name = "User" if msg.get("role") == "user" else "AI"
+            history_text += f"{role_name}: {msg.get('text', '')}\n"
+        
     prompt = f"""
-You are a helpful and enthusiastic media recommendation AI assistant.
-The user sent the following message: "{message}"
+You are a helpful, highly intelligent, and enthusiastic AI assistant for the RecMedia platform.
+You are capable of answering ANY question the user asks, including general knowledge, science, programming, math, casual conversation, and media recommendations.
 
-Here is our catalog (ID: Title (Genre, Category)):
+{history_text}
+User's new message: "{message}"
+
+If the user is asking for media recommendations (movies, series, music, books), here is our catalog (ID: Title (Genre, Category)):
 {chr(10).join(catalog_summary)}
 
 Respond ONLY with a valid JSON object, with no markdown formatting or backticks.
 The JSON must have two fields:
-1. "reply": A natural, conversational response to the user's message in the {lang} language. Acknowledge what they asked for and introduce the recommendations if you found any. Be friendly and concise.
-2. "item_ids": An array of integer IDs of up to 4 items from the catalog that best match their request. If nothing matches perfectly, provide the closest matches. If it's a general question without needing items, leave the array empty.
+1. "reply": A natural, conversational response to the user's message in the {lang} language. You should answer general questions fully and accurately. If they ask for recommendations, provide them and reference the catalog. Be friendly, smart, and helpful.
+2. "item_ids": An array of integer IDs of up to 4 items from the catalog that best match their request. If they are NOT asking for recommendations, or if no items match, leave the array empty [].
 
 Format:
 {{
-  "reply": "Отличный выбор! Вот несколько бодрящих треков для вашей тренировки:",
-  "item_ids": [100, 101, 102]
+  "reply": "Your detailed and smart answer here...",
+  "item_ids": []
 }}
 """
     try:
