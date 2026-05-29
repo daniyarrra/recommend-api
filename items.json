@@ -46,5 +46,231 @@
       }
     ],
     "is_featured": false
+  },
+  {
+    "id": 20,
+    "title": "The Matrix",
+    "genre": "Sci-Fi",
+    "category": "Фильмы",
+    "description": {
+      "ru": "Хакер Нео узнает шокирующую правду о том, что весь мир — это компьютерная симуляция, и присоединяется к восстанию против машин.",
+      "en": "",
+      "kz": ""
+    },
+    "image": "https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcQ8gpng37T-3UglXQj_mXts9gZEmmISEgC0-voOBnlivW-dYv_2uWF1LBaXFRb7bJSM2FBhi3ESjUKBUwCK_-XUhlf965a3D6qJiKNvsw&s=10",
+    "trailer_url": "https://www.youtube.com/embed/vKQi3bBA1y8",
+    "preview_url": "",
+    "artist": "",
+    "cast": [],
+    "director": [],
+    "is_featured": false
+  },
+  {
+    "id": 21,
+    "title": "Avengers: Endgame",
+    "genre": "Action",
+    "category": "Фильмы",
+    "description": {
+      "ru": "Оставшиеся в живых Мстители собираются вместе, чтобы отменить действия Таноса и восстановить баланс во Вселенной.",
+      "en": "",
+      "kz": ""
+    },
+    "image": "https://m.media-amazon.com/images/M/MV5BMTc5MDE2ODcwNV5BMl5BanBnXkFtZTgwMzI2NzQ2NzM@._V1_FMjpg_UX1000_.jpg",
+    "trailer_url": "https://www.youtube.com/embed/TcMBFSGVi1c",
+    "preview_url": "",
+    "artist": "",
+    "cast": [],
+    "director": [],
+    "is_featured": false
+  },
+  {
+    "id": 23,
+    "title": "Oppenheimer",
+    "genre": "Drama",
+    "category": "Фильмы",
+    "description": {
+      "ru": "История жизни американского физика Дж. Роберта Оппенгеймера, стоявшего во главе разработки атомной бомбы.",
+      "en": "",
+      "kz": ""
+    },
+    "image": "https://m.media-amazon.com/images/S/pv-target-images/d9f67a6329594143d83e86b2fde4415cf590db823e656963844ef2d0ebaacf76.jpg",
+    "trailer_url": "https://www.youtube.com/embed/uYPbbksJxIg",
+    "preview_url": "",
+    "artist": "",
+    "cast": [],
+    "director": [],
+    "is_featured": false
+  },
+  {
+    "id": 24,
+    "title": "Gladiator",
+    "genre": "Action",
+    "category": "Фильмы",
+    "description": {
+      "ru": "Римский полководец Максимус, преданный своим императором, становится рабом и затем гладиатором.",
+      "en": "",
+      "kz": ""
+    },
+    "image": "https://m.media-amazon.com/images/I/912Ht9rUWWS._AC_UF894,1000_QL80_.jpg",
+    "trailer_url": "https://www.youtube.com/embed/owK1qxDselE",
+    "preview_url": "",
+    "artist": "",
+    "cast": [],
+    "director": [],
+    "is_featured": false
+  },
+  {
+    "id": 112,
+    "title": {
+      "ru": "Проект «Аве Мария»",
+      "en": "Project Hail Mary",
+      "kz": "Аве Мария жобасы"
+    },
+    "genre": "Научная фантастика, Приключения, Комедия",
+    "category": "Фильмы",
+    "description": {
+      "ru": "Астронавт просыпается на космическом корабле без воспоминаний о том, кто он и как там оказался, лишь смутно помня о своей критически важной миссии: спасти человечество. Вместе с неожиданным инопланетным спутником ему предстоит собрать воедино разрозненные подсказки, чтобы предотвратить апокалиптическую катастрофу на Земле.",
+      "en": "An astronaut wakes up on a space mission with no memory of who he is or how he got there, only a faint recollection of his critical task: save humanity. Alongside an unexpected alien companion, he must piece together the clues to prevent an apocalyptic disaster back on Earth.",
+      "kz": "Ғарышкер ғарыш кемесінде кім екенін және қалай келгенін есіне түсіре алмай оянады, тек адамзатты құтқару туралы маңызды миссиясын бұлдыр есте сақтайды. Күтпеген бөтен ғаламшарлық серіктесімен бірге ол Жердегі апатты апаттың алдын алу үшін барлық жұмбақтарды біріктіруі керек."
+    },
+    "image": "https://is1-ssl.mzstatic.com/image/thumb/Video211/v4/72/91/05/72910566-11dc-349d-00f6-9320bb8f5f86/2000x3000_ProjectHailMary.jpg/600x600bb.jpg",
+    "trailer_url": "https://video-ssl.itunes.apple.com/itunes-assets/Video221/v4/6b/2b/49/6b2b4979-d190-93f5-f932-259bc8939e3c/mzvf_3247962505325614139.640x426.h264lc.U.p.m4v",
+    "preview_url": "",
+    "artist": "",
+    "cast": [],
+    "director": [],
+    "is_featured": false
+  },
+  {
+    "id": 113,
+    "title": {
+      "ru": "«Супер Марио Гэлакси»",
+      "en": "The Super Mario Galaxy Movie",
+      "kz": "Супер Марио Гэлакси"
+    },
+    "genre": "Animation, Adventure, Family, Sci-Fi, Fantasy",
+    "category": "Фильмы",
+    "description": {
+      "ru": "Отправьтесь в незабываемое межгалактическое приключение вместе с Марио, когда он пересекает космические просторы, чтобы спасти принцессу Пич от коварного Боузера. Наполненный звездными мирами, уникальными планетами и незабываемыми персонажами, этот фильм обещает волшебное путешествие для всей семьи.",
+      "en": "Embark on an unforgettable intergalactic adventure with Mario as he traverses the cosmos to rescue Princess Peach from the nefarious Bowser. Filled with star-studded worlds, unique planets, and beloved characters, this movie promises a magical journey for the whole family.",
+      "kz": "Мариомен бірге жұлдыздар толы әлемдерді кезіп, ғарышқа толы ұмытылмас шытырман оқиғаға аттаныңыз. Зұлым Боузерден ханшайым Пичті құтқару үшін ол галактиканы аралайды. Бұл фильм бүкіл отбасы үшін сиқырлы саяхатты уәде етеді, онда сізді ерекше планеталар мен сүйікті кейіпкерлер күтеді."
+    },
+    "image": "https://is1-ssl.mzstatic.com/image/thumb/Video221/v4/a3/5c/e7/a35ce775-baf8-f066-ab8e-c97a550a771d/UNI_SUPER_MARIO_GALAXY_MOVIE_THE_TH_ITUNES_EPO_WW_ARTWORK_EN_2000x3000_5BL7AB000001VT.lsr/600x600bb.jpg",
+    "trailer_url": "https://video-ssl.itunes.apple.com/itunes-assets/Video211/v4/e1/f3/d4/e1f3d410-d870-ee39-6fe6-de7018fc73b5/mzvf_804722456223818936.640x354.h264lc.U.p.m4v",
+    "preview_url": "",
+    "artist": "",
+    "cast": [],
+    "director": [],
+    "is_featured": false
+  },
+  {
+    "id": 114,
+    "title": {
+      "ru": "Мумия Ли Кронина",
+      "en": "Lee Cronin's the Mummy",
+      "kz": "Ли Крониннің Мумиясы"
+    },
+    "genre": "Horror, Adventure, Thriller",
+    "category": "Фильмы",
+    "description": {
+      "ru": "Приготовьтесь к ужасающему новому взгляду на древнее проклятие! От режиссера Ли Кронина, известного своей леденящей кровь работой над фильмом «Восстание зловещих мертвецов», приходит свежая интерпретация классического монстра, обещающая беспощадное погружение в страх и сверхъестественное.",
+      "en": "Prepare for a terrifying new vision of an ancient curse! From director Lee Cronin, known for his chilling work on *Evil Dead Rise*, comes a fresh take on the classic monster, promising a relentless journey into fear and the supernatural.",
+      "kz": "Ежелгі қарғыстың қорқынышты жаңа көрінісіне дайындалыңыз! «Қанішерлердің қайта оралуындағы» қорқынышты туындыларымен танымал режиссер Ли Крониннен классикалық құбыжық туралы жаңа көзқарас келеді, ол қорқыныш пен табиғаттан тыс дүниеге толы аяусыз саяхатты уәде етеді."
+    },
+    "image": "https://is1-ssl.mzstatic.com/image/thumb/Video211/v4/22/46/08/224608eb-a2b8-e56d-3ed2-2bbaaf1279f2/LeeCronins_TheMummy_STD_APO_V_KA_TT_2000x3000_300dpi_EN.jpg/600x600bb.jpg",
+    "trailer_url": "https://video-ssl.itunes.apple.com/itunes-assets/Video211/v4/17/00/3d/17003ded-a627-5900-8e82-309df1037648/mzvf_10398921940988737687.640x356.h264lc.U.p.m4v",
+    "preview_url": "",
+    "artist": "",
+    "cast": [],
+    "director": [],
+    "is_featured": false
+  },
+  {
+    "id": 115,
+    "title": {
+      "ru": "Удачи, развлекайтесь, не умрите",
+      "en": "Good Luck, Have Fun, Don't Die",
+      "kz": "Сәттілік, көңіл көтер, өлме"
+    },
+    "genre": "Action, Adventure, Comedy",
+    "category": "Фильмы",
+    "description": {
+      "ru": "Приготовьтесь к невероятному приключению, где на кону стоит не только выживание, но и шанс на эпическое веселье. В мире, полном опасностей и неожиданных поворотов, героям предстоит сохранить хладнокровие, чувство юмора и, самое главное, остаться в живых. Удачи, развлекайтесь и не умирайте!",
+      "en": "Gear up for an unforgettable journey where every decision could be your last and epic fun is part of the mission. In a world brimming with perilous challenges and unexpected twists, our heroes must navigate through chaos, keeping their wits and their sense of humor intact. It's a high-stakes game where survival is key, but so is having the time of your life – and, of course, not dying.",
+      "kz": "Әр қадам соңғы болып қалуы мүмкін ұмытылмас шытырман оқиғаға дайын болыңыз. Қауіптер мен күтпеген бұрылыстарға толы әлемде кейіпкерлер сабырлылық пен әзіл-қалжыңды сақтап, ең бастысы, аман қалуы керек. Сәттілік, көңіл көтеріңіз және өліп қалмаңыз!"
+    },
+    "image": "https://is1-ssl.mzstatic.com/image/thumb/Video221/v4/ac/fc/12/acfc12ab-a48c-615e-6b9e-1e2c94754a19/UNI_GOOD_LUCK_HAVE_FUN_DONT_DIE_TH_ITUNES_WW_ARTWORK_EN_2000x3000_59ML2G00000CSW.lsr/600x600bb.jpg",
+    "trailer_url": "https://video-ssl.itunes.apple.com/itunes-assets/Video211/v4/2c/48/d4/2c48d458-f28a-b222-f881-c65b83e92d05/mzvf_9274519799438823317.640x356.h264lc.U.p.m4v",
+    "preview_url": "",
+    "artist": "",
+    "cast": [],
+    "director": [],
+    "is_featured": false
+  },
+  {
+    "id": 116,
+    "title": {
+      "ru": "Кузнечики",
+      "en": "Hoppers",
+      "kz": "Шегірткелер"
+    },
+    "genre": "Animation, Comedy, Family",
+    "category": "Фильмы",
+    "description": {
+      "ru": "Приготовьтесь к невероятному приключению в мире насекомых! Этот очаровательный короткометражный мультфильм рассказывает о группе храбрых кузнечиков, которые пытаются преодолеть опасное препятствие. Смогут ли они успешно пересечь оживленную дорогу и добраться до своей цели?",
+      "en": "Get ready for an incredible insect adventure! This charming animated short follows a group of brave grasshoppers attempting to overcome a perilous obstacle. Will they successfully cross the busy road and reach their destination?",
+      "kz": "Жәндіктер әлеміндегі таңғажайып оқиғаға дайын болыңыз! Бұл сүйкімді анимациялық қысқаметражды фильм қауіпті кедергіні жеңуге тырысатын батыл шегірткелер тобы туралы баяндайды. Олар қарбалас жолды сәтті кесіп өтіп, мақсатына жете ала ма?"
+    },
+    "image": "https://m.media-amazon.com/images/M/MV5BZTI4YzAxNjUtM2ZhZS00MmFkLWI1YTYtZGViNWM5MzA1NDQxXkEyXkFqcGc@._V1_.jpg",
+    "trailer_url": "https://video-ssl.itunes.apple.com/itunes-assets/Video221/v4/f9/2a/01/f92a01e9-0333-19f0-b216-d6e946747c5b/mzvf_17191174843772804073.640x460.h264lc.U.p.m4v",
+    "preview_url": "",
+    "artist": "",
+    "cast": [],
+    "director": [],
+    "is_featured": false
+  },
+  {
+    "id": 117,
+    "title": {
+      "ru": "Обычный",
+      "en": "Normal",
+      "kz": "Қалыпты"
+    },
+    "genre": "Drama, Character Study",
+    "category": "Фильмы",
+    "description": {
+      "ru": "Погрузитесь в мир, который кажется абсолютно обыденным, но под его поверхностью скрываются глубокие вопросы о личности и существовании. Эта захватывающая драма исследует непростые жизни обычных людей, доказывая, что самые необыкновенные истории порой обнаруживаются в самых «нормальных» обстоятельствах.",
+      "en": "Dive into a seemingly ordinary world where routine reigns supreme, yet beneath the surface, profound questions about identity and existence begin to emerge. This compelling drama explores the intricate lives of everyday people, revealing that sometimes, the most extraordinary stories are found in the most 'normal' of circumstances.",
+      "kz": "Күнделікті өмірдің қалыпты ағынымен өтіп жатқан оқиғаға үңіліңіз. Бірақ осы қарапайымдылықтың артында жеке тұлға мен өмір туралы терең сұрақтар жатыр. «Қалыпты» – бұл әрқайсымыздың ішімізде жасырылған, кейде ең ерекше оқиғалардың ең «қалыпты» жағдайда кездесетінін көрсететін әсерлі драма."
+    },
+    "image": "https://is1-ssl.mzstatic.com/image/thumb/Video221/v4/93/97/11/93971186-b416-0bcb-beb6-bccf119d8d92/2000x3000.jpg/600x600bb.jpg",
+    "trailer_url": "https://video-ssl.itunes.apple.com/itunes-assets/Video211/v4/07/58/c6/0758c637-c3bd-c35a-f9ad-ef25b9a77318/mzvf_16312994019829174935.640x356.h264lc.U.p.m4v",
+    "preview_url": "",
+    "artist": "",
+    "cast": [],
+    "director": [],
+    "is_featured": false
+  },
+  {
+    "id": 118,
+    "title": {
+      "ru": "Драма",
+      "en": "The Drama",
+      "kz": "Драма"
+    },
+    "genre": "Драма",
+    "category": "Фильмы",
+    "description": {
+      "ru": "Погрузитесь в мир глубоких человеческих переживаний, где каждое решение имеет свои последствия. Эта картина расскажет вам захватывающую историю, полную интриг, любви и самопознания, которая никого не оставит равнодушным. Приготовьтесь к эмоциональному путешествию, которое заставит задуматься о многом.",
+      "en": "Dive into a world of profound human experiences, where every decision carries significant consequences. This compelling film weaves a captivating narrative of intrigue, love, and self-discovery that will resonate deeply with every viewer. Prepare for an emotional journey that challenges perspectives and leaves a lasting impression.",
+      "kz": "Әрбір шешімнің салдары бар терең адамзат тәжірибесінің әлеміне еніңіз. Бұл қызықты фильм интригаға, махаббатқа және өзін-өзі тануға толы тартымды баяндаумен көрермендерді бей-жай қалдырмайды. Көзқарастарды өзгертетін және ұзақ әсер қалдыратын эмоционалды саяхатқа дайын болыңыз."
+    },
+    "image": "https://is1-ssl.mzstatic.com/image/thumb/Video221/v4/aa/78/80/aa7880f5-475d-7c53-aa89-46ab7e634dd6/A24-Drama-Transactional-Movies-Cover.jpg/600x600bb.jpg",
+    "trailer_url": "https://video-ssl.itunes.apple.com/itunes-assets/Video221/v4/20/5a/e7/205ae78e-19c0-d52a-810d-da4a94d42286/mzvf_13607023925724881867.640x460.h264lc.U.p.m4v",
+    "preview_url": "",
+    "artist": "",
+    "cast": [],
+    "director": [],
+    "is_featured": false
   }
 ]
