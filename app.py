@@ -1081,54 +1081,80 @@ def admin_ai_fill():
     if not os.getenv("GEMINI_API_KEY"):
         return jsonify({"error": "Gemini API key is not configured"}), 500
         
-    prompt = f"""
-    You are an expert content editor for an entertainment catalog.
-    We have an item in category "{category}" with the input title "{title}".
-    
-    Please detect the language of the title and generate:
-    1. The translated/transliterated titles for:
-       - Russian (title_ru) (e.g., if input is "The Drama", this should be "Драма")
-       - English (title_en) (e.g., if input is "The Drama", this should be "The Drama")
-       - Kazakh (title_kz) (e.g., if input is "The Drama", this should be "Драма")
-    2. Comma-separated genres.
-    3. Catchy descriptions (about 2-3 sentences) in Russian, English, and Kazakh.
-    
-    Provide the response ONLY in the following JSON format, without any markdown formatting or backticks:
-    {{
-        "title_ru": "Title translated/transliterated to Russian",
-        "title_en": "Title translated/transliterated to English",
-        "title_kz": "Title translated/transliterated to Kazakh",
-        "genre": "Comma separated genres (e.g., Sci-Fi, Drama)",
-        "description_ru": "A catchy description in Russian (about 2-3 sentences).",
-        "description_en": "A catchy description in English (about 2-3 sentences).",
-        "description_kz": "A catchy description in Kazakh (about 2-3 sentences)."
-    }}
-    """
-    
-    try:
-        import urllib.request as urlreq
-        api_key = os.getenv("GEMINI_API_KEY")
-        rest_url = f"https://generativelanguage.googleapis.com/v1beta/models/gemini-3.5-flash:generateContent?key={api_key}"
-        rest_body = json.dumps({
-            "contents": [{"parts": [{"text": prompt}]}],
-            "generationConfig": {"temperature": 0.7, "maxOutputTokens": 1024}
-        }).encode("utf-8")
-        rest_req = urlreq.Request(rest_url, data=rest_body, headers={"Content-Type": "application/json"}, method="POST")
-        with urlreq.urlopen(rest_req, timeout=30) as resp:
-            rest_data = json.loads(resp.read().decode())
-            response_text = rest_data["candidates"][0]["content"]["parts"][0]["text"].strip()
-        
-        # Clean up possible markdown
-        if response_text.startswith("```json"):
-            response_text = response_text[7:-3].strip()
-        elif response_text.startswith("```"):
-            response_text = response_text[3:-3].strip()
-            
-        result = json.loads(response_text)
-        return jsonify(result), 200
-    except Exception as e:
-        print("AI Gen Error:", e)
-        return jsonify({"error": str(e)}), 500
+    prompt = f"""You are an expert content editor for an entertainment catalog.
+We have an item in category "{category}" with the input title "{title}".
+
+Detect the language of the title and generate:
+1. Translated/transliterated titles in Russian (title_ru), English (title_en), Kazakh (title_kz).
+2. Comma-separated genres relevant to the category (e.g. "Sci-Fi, Drama").
+3. Catchy 2-3 sentence descriptions in Russian (description_ru), English (description_en), Kazakh (description_kz).
+
+Return ONLY a JSON object with keys: title_ru, title_en, title_kz, genre, description_ru, description_en, description_kz."""
+
+    import urllib.request as urlreq
+    import urllib.error as urlerr
+
+    api_key = os.getenv("GEMINI_API_KEY")
+    last_error = None
+
+    for model in get_gemini_models():
+        try:
+            rest_url = f"https://generativelanguage.googleapis.com/v1beta/models/{model}:generateContent?key={api_key}"
+            rest_body = json.dumps({
+                "contents": [{"parts": [{"text": prompt}]}],
+                "generationConfig": {
+                    "temperature": 0.7,
+                    "maxOutputTokens": 1024,
+                    "responseMimeType": "application/json",
+                    "responseSchema": {
+                        "type": "OBJECT",
+                        "properties": {
+                            "title_ru":       {"type": "STRING"},
+                            "title_en":       {"type": "STRING"},
+                            "title_kz":       {"type": "STRING"},
+                            "genre":          {"type": "STRING"},
+                            "description_ru": {"type": "STRING"},
+                            "description_en": {"type": "STRING"},
+                            "description_kz": {"type": "STRING"},
+                        },
+                        "required": ["title_ru","title_en","title_kz","genre",
+                                     "description_ru","description_en","description_kz"]
+                    }
+                }
+            }).encode("utf-8")
+
+            rest_req = urlreq.Request(rest_url, data=rest_body,
+                                      headers={"Content-Type": "application/json"}, method="POST")
+            with urlreq.urlopen(rest_req, timeout=30) as resp:
+                rest_data = json.loads(resp.read().decode())
+
+            if rest_data.get("error"):
+                code = rest_data["error"].get("code")
+                last_error = rest_data["error"].get("message", "Unknown error")
+                print(f"AI-Fill: model {model} returned error {code}: {last_error}")
+                if code in (404, 429, 503):
+                    continue
+                break
+
+            response_text = rest_data["candidates"][0]["content"]["parts"][0]["text"]
+            result = parse_gemini_json(response_text)
+            print(f"AI-Fill: success with model {model}")
+            return jsonify(result), 200
+
+        except urlerr.HTTPError as http_err:
+            body = http_err.read().decode("utf-8", errors="ignore")
+            last_error = f"HTTP {http_err.code}: {body}"
+            print(f"AI-Fill: model {model} HTTP error {http_err.code}")
+            if http_err.code in (404, 429, 503):
+                continue
+            break
+        except Exception as e:
+            last_error = str(e)
+            print(f"AI-Fill: model {model} exception: {e}")
+
+    print("AI-Fill: all models failed:", last_error)
+    return jsonify({"error": last_error or "All AI models failed"}), 500
+
 
 @app.route("/api/chat", methods=["POST"])
 def api_chat():
@@ -1190,7 +1216,7 @@ Format:
         # Try REST API directly first (bypasses geographic library checks)
         try:
             import urllib.request as urlreq
-            rest_url = f"https://generativelanguage.googleapis.com/v1beta/models/gemini-3.5-flash:generateContent?key={api_key}"
+            rest_url = f"https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash:generateContent?key={api_key}"
             rest_body = json.dumps({
                 "contents": [{"parts": [{"text": prompt}]}],
                 "generationConfig": {"temperature": 0.7, "maxOutputTokens": 1024}
